@@ -6,7 +6,7 @@ I've created this project to help me learn more about networking, whilst learnin
 
 ### Phase 1 - Send a raw query
 
-- [ ] Open a UDP socket with std.posix.socket and connect to 8.8.8.8:53
+- [ ] Open a UDP socket with std.posix.socket and connect to 8.8.8.8:53 (Google Public DNS)
 - [ ] Manually write a minimal query for example.com A into a fixed buffer
 - [ ] Receive the response and std.debug.print raw bytes in hex
 - [ ] Zig concepts: std.posix, fixed-size arrays, @intCast, error union basics

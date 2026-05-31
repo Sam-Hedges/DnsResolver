@@ -1,28 +1,28 @@
 const std = @import("std");
 const Io = std.Io;
+const net = std.Io.net;
 
-pub fn main(init: std.process.Init) !void {
-    // Prints to stderr, unbuffered, ignoring potential errors.
-    std.debug.print("All your {s} are belong to us.\n", .{"codebase"});
+pub fn main() !void {
+    var io_init = Io.Threaded.init_single_threaded;
+    defer io_init.deinit();
+    const io = io_init.io();
 
-    // This is appropriate for anything that lives as long as the process.
-    const arena: std.mem.Allocator = init.arena.allocator();
+    // Bind a UDP socket to Google Public DNS
+    const local_addr = try net.IpAddress.parse("8.8.8.8", 8080);
+    const bind_opts: Io.net.IpAddress.BindOptions = .{
+        .ip6_only = false,
+        .mode = .dgram,
+        .protocol = .udp,
+    };
+    var sock = try net.IpAddress.bind(&local_addr, io, bind_opts);
+    defer sock.close(io);
 
-    // Accessing command line arguments:
-    const args = try init.minimal.args.toSlice(arena);
-    for (args) |arg| {
-        std.log.info("arg: {s}", .{arg});
-    }
+    var buf: [1024]u8 = undefined;
 
-    // In order to do I/O operations need an `Io` instance.
-    const io = init.io;
+    // Receive a datagram (blocks until one arrives)
+    const msg = try sock.receive(io, &buf);
+    std.debug.print("Received {} bytes from {f}\n", .{ msg.data.len, msg.from });
 
-    // Stdout is for the actual output of your application, for example if you
-    // are implementing gzip, then only the compressed bytes should be sent to
-    // stdout, not any debugging messages.
-    var stdout_buffer: [1024]u8 = undefined;
-    var stdout_file_writer: Io.File.Writer = .init(.stdout(), io, &stdout_buffer);
-    const stdout_writer = &stdout_file_writer.interface;
-
-    try stdout_writer.flush(); // Don't forget to flush!
+    // Send a reply back to sender
+    try sock.send(io, &msg.from, msg.data);
 }
