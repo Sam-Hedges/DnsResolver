@@ -30,8 +30,26 @@ pub const HeaderFlagResponseCode = enum(u4) {
 pub const HeaderFlags = packed union {
     raw: u16,
     data: packed struct {
-        /// Specifies whether this message is a query (0), or a response (1).
-        query_response: bool,
+        /// This 4 bit field is set as part of responses.
+        response_code: HeaderFlagResponseCode,
+        /// Reserved for future use. Must be zero in all queries and responses.
+        _Z: u3 = 0,
+        /// This be is set or cleared in a response, and denotes whether recursive
+        /// query support is available in the name server.
+        recursion_available: bool,
+        /// this bit may be set in a query and is copied into the response. If RD is
+        /// set, it directs the name server to pursue the query recursively.
+        /// Recursive query support is optional.
+        recursion_desired: bool,
+        /// Specifies that this message was truncated due to length greater than
+        /// that permitted on the transmission channel.
+        truncation: bool,
+        /// Is valid in responses, and specifies that the responding name server is
+        /// an authority for the domain name in question section. The contents of the
+        /// answer section may have multiple owner names due to aliases. The AA bit
+        /// corresponds to the name which matches the query name, or the first owner
+        /// name in the answer section.
+        authoritative_answer: bool,
         /// A four bit field that specifies kind of query in this message. This value
         /// is set by the originator of a query and copied into the response. The
         /// values are:
@@ -40,26 +58,8 @@ pub const HeaderFlags = packed union {
         /// 2               a server status request (STATUS)
         /// 3-15            reserved for future use
         opcode: HeaderFlagOpcode,
-        /// Is valid in responses, and specifies that the responding name server is
-        /// an authority for the domain name in question section. The contents of the
-        /// answer section may have multiple owner names due to aliases. The AA bit
-        /// corresponds to the name which matches the query name, or the first owner
-        /// name in the answer section.
-        authoritative_answer: bool,
-        /// Specifies that this message was truncated due to length greater than
-        /// that permitted on the transmission channel.
-        truncation: bool,
-        /// this bit may be set in a query and is copied into the response. If RD is
-        /// set, it directs the name server to pursue the query recursively.
-        /// Recursive query support is optional.
-        recursion_desired: bool,
-        /// This be is set or cleared in a response, and denotes whether recursive
-        /// query support is available in the name server.
-        recursion_available: bool,
-        /// Reserved for future use. Must be zero in all queries and responses.
-        _Z: u3 = 0,
-        /// This 4 bit field is set as part of responses.
-        response_code: HeaderFlagResponseCode,
+        /// Specifies whether this message is a query (0), or a response (1).
+        query_response: bool,
     },
 };
 
@@ -92,7 +92,7 @@ pub const QuestionRecord = packed struct {
     /// A two octet code which specifies the type of the query. The values for this
     /// field include all codes valid for a TYPE field, together with some more
     /// general codes which can match more than one type of RR.
-    type: u16,
+    rtype: u16,
     /// A two octet code that specifies the class of the query. For example, the
     /// QCLASS field is IN for the Internet.
     class: u16,
@@ -103,7 +103,7 @@ pub const ResourceRecord = packed struct {
     name: u64,
     /// Two octets containing one of the RR type codes. This field specifies the
     /// meaning of the data in the RDATA field.
-    type: u16,
+    rtype: u16,
     /// Two octets which specify the class of the data in the RDATA field.
     class: u16,
     /// A 32 bit unsigned integer that specifies the time interval (in seconds) that
