@@ -2,6 +2,8 @@ const std = @import("std");
 const Io = std.Io;
 const net = std.Io.net;
 
+const dns = @import("dns.zig");
+
 pub fn main() !void {
     var io_init = Io.Threaded.init_single_threaded;
     defer io_init.deinit();
